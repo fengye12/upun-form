@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+    <form id="demoForm2">
+    <fieldset>
+        <legend>Demo 2</legend>
+        <input name="file" type="file" id="file2" onchange="previewImage(this)" accept="image/gif,image/jpeg,image/jpg,image/png,image/svg">
+        <a id="submit2" class="submit">submit</a>
+    </fieldset>
+    <div id="preview"></div>
+    <div id="imgBox">
+
+    </div>
+</form>
+
+    </body>
+</html>
+<script src="jquery-3.1.1.js"></script>
+<script src="md5.js"></script>
+<script src="wxapp.js" type="text/javascript"></script>
+<script src="upyun.js"></script>
+<script>
+
+
+var upyun = new Upyun({});
+// var file = document.getElementById('file2').files[0];
+function upLoad(file){
+       upyun.upload({
+                       localPath: file,
+                       localName:file.name,
+                       success: function (res) {
+                        var picJson=JSON.parse(res);
+                       console.log(picJson);
+                       var imgurl=GetImageUrl(picJson.url);
+                       console.log(imgurl)
+                       },
+                       fail: function (errMsg) {
+                          console.log('err')
+                       },
+                       complete: function () {
+                         console.log('complete')
+                       }
+                   })
+   }
+$("#submit2").click(function(event) {
+    $.each(filesArray, function(index, val) {
+        upLoad(val);
+    });
+})
+var index=0;
+var filesArray=[];
+$("#imgBox").on('click', '.delete', function(event) {
+    var self=this;
+   var deleteImg=$("#imgBox .delete");
+  $.each(deleteImg, function(index, val) {
+      if(val==self){
+       $(self).closest('.imgDiv').remove();
+
+       filesArray.del(index);
+       console.log(filesArray);
+        return false;
+      }
+    });
+});
+
+ function previewImage(file)
+  {
+    var MAXWIDTH  = 218;     //用来显示上传图片的宽度
+    var MAXHEIGHT = 158;     //用来显示上传图片的高度
+    var div = document.getElementById('preview');
+    if (file.files && file.files[0])
+    {
+        filesArray.push(file.files[0]);
+        console.log(filesArray)
+      div.innerHTML = '<img id=imghead>';
+      var img = document.getElementById('imghead');
+      img.onload = function(){
+        var rect = clacImgZoomParam(MAXWIDTH, MAXHEIGHT, img.offsetWidth, img.offsetHeight);
+        img.width = rect.width;
+        img.height = rect.height;
+        // img.style.marginLeft = rect.left+'px';
+        // img.style.marginTop = rect.top+'px';
+      };
+      var reader = new FileReader();
+      reader.onload = function(evt){img.src = evt.target.result;
+        $("#imgBox").append('<div class="imgDiv"><img src="'+ evt.target.result+'"alt="附件"  class="Pic"/><img src="" alt="删除" class="delete"></div>')
+      };
+      reader.readAsDataURL(file.files[0]);
+    }
+    else
+    {
+      var sFilter='filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod=scale,src="';
+      file.select();
+      var src = document.selection.createRange().text;
+      div.innerHTML = '<img id=imghead>';
+      var img = document.getElementById('imghead');
+      img.filters.item('DXImageTransform.Microsoft.AlphaImageLoader').src = src;
+      var rect = clacImgZoomParam(MAXWIDTH, MAXHEIGHT, img.offsetWidth, img.offsetHeight);
+      status =('rect:'+rect.top+','+rect.left+','+rect.width+','+rect.height);
+      div.innerHTML = "<div id=divhead style='width:"+rect.width+"px;height:"+rect.height+"px;margin-top:"+rect.top+"px;margin-left:"+rect.left+"px;"+sFilter+src+"\"'></div>";
+    }
+
+
+  }
+  function clacImgZoomParam( maxWidth, maxHeight, width, height ){
+      var param = {top:0, left:0, width:width, height:height};
+      if( width>maxWidth || height>maxHeight )
+      {
+          rateWidth = width / maxWidth;
+          rateHeight = height / maxHeight;
+          if( rateWidth > rateHeight )
+          {
+              param.width =  maxWidth;
+              param.height = Math.round(height / rateWidth);
+          }else
+          {
+              param.width = Math.round(width / rateHeight);
+              param.height = maxHeight;
+          }
+      }
+      param.left = Math.round((maxWidth - param.width) / 2);
+      param.top = Math.round((maxHeight - param.height) / 2);
+      return param;
+  }
+
+  Array.prototype.del=function(index){
+    if(isNaN(index)||index>=this.length){
+      return false;
+    }
+    for(var i=0,n=0;i<this.length;i++){
+      if(this[i]!=this[index]){
+        this[n++]=this[i];
+      }
+    }
+    this.length-=1;
+  };
+</script>
